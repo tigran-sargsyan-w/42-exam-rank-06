@@ -1,0 +1,20 @@
+# Exam Rank 06 binary file
+mini_serv
+
+# Objects / dependencies
+/obj
+*.o
+*.d
+
+# Debug
+*.dSYM/
+vgcore.*
+core
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
