@@ -1,133 +1,187 @@
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include <unistd.h>
-# include <strings.h>
-# include <netinet/in.h>
-# include <sys/select.h>
-# include <sys/socket.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <netinet/ip.h>
 
-typedef struct s_client {
-	int		id;
-	char	msg[110000];
-}	t_client;
+int		count = 0, max_fd = 0;
+int		ids[65536];
+char	*msgs[65536];
 
-t_client	clients[1024];
+fd_set	rfds, wfds, afds;
+char	buf_read[1001], buf_write[42];
 
-fd_set		fds, read_fds, write_fds;
 
-int			max_fd = 0;
-int			next_id = 0;
+// START COPY-PASTE FROM GIVEN MAIN
 
-char		read_buffer[120000];
-char		write_buffer[120000];
+int extract_message(char **buf, char **msg)
+{
+	char	*newbuf;
+	int	i;
 
-void		fatal() {
+	*msg = 0;
+	if (*buf == 0)
+		return (0);
+	i = 0;
+	while ((*buf)[i])
+	{
+		if ((*buf)[i] == '\n')
+		{
+			newbuf = calloc(1, sizeof(*newbuf) * (strlen(*buf + i + 1) + 1));
+			if (newbuf == 0)
+				return (-1);
+			strcpy(newbuf, *buf + i + 1);
+			*msg = *buf;
+			(*msg)[i + 1] = 0;
+			*buf = newbuf;
+			return (1);
+		}
+		i++;
+	}
+	return (0);
+}
+
+char *str_join(char *buf, char *add)
+{
+	char	*newbuf;
+	int		len;
+
+	if (buf == 0)
+		len = 0;
+	else
+		len = strlen(buf);
+	newbuf = malloc(sizeof(*newbuf) * (len + strlen(add) + 1));
+	if (newbuf == 0)
+		return (0);
+	newbuf[0] = 0;
+	if (buf != 0)
+		strcat(newbuf, buf);
+	free(buf);
+	strcat(newbuf, add);
+	return (newbuf);
+}
+
+// END COPY-PASTE
+
+
+void	fatal_error()
+{
 	write(2, "Fatal error\n", 12);
 	exit(1);
 }
 
-void		broadcaster(int sender) {
+void	notify_other(int author, char *str)
+{
 	for (int fd = 0; fd <= max_fd; fd++)
-		if (FD_ISSET(fd, &write_fds) && fd != sender)
-			send(fd, write_buffer, strlen(write_buffer), 0);
-}
-
-int        init_server(char* port) {
-	int sockfd;
-	struct sockaddr_in addr;
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-		fatal();
-
-	bzero(&addr, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = 16777343;
-    addr.sin_port = (atoi(port) << 8) | (atoi(port) >> 8);
-
-	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-		fatal();
-	if (listen(sockfd, 128) < 0)
-		fatal();
-
-	return sockfd;
-}
-
-void		handle_new_connection(int sockfd) {
-	struct sockaddr_in addr;
-	socklen_t len = sizeof(addr);
-
-	int client_fd = accept(sockfd, (struct sockaddr *)&addr, &len);
-	if (client_fd < 0)
-		fatal();
-	if (client_fd > max_fd)
-		max_fd = client_fd;
-
-	clients[client_fd].id = next_id++;
-	FD_SET(client_fd, &fds);
-
-	sprintf(write_buffer, "server: client %d just arrived\n", clients[client_fd].id);
-	broadcaster(client_fd);
-}
-
-void		handle_disconnect(int client_fd) {
-	sprintf(write_buffer, "server: client %d just left\n", clients[client_fd].id);
-	broadcaster(client_fd);
-
-	FD_CLR(client_fd, &fds);
-	close(client_fd);
-	bzero(clients[client_fd].msg, sizeof(clients[client_fd].msg));
-}
-
-void		handle_message(int fd) {
-	int bytes = recv(fd, read_buffer, sizeof(read_buffer), 0);
-	if (bytes <= 0) {
-		handle_disconnect(fd);
-		return ;
-	}
-
-	for (int i = 0, j = strlen(clients[fd].msg); i < bytes; i++, j++) {
-		clients[fd].msg[j] = read_buffer[i];
-		if (clients[fd].msg[j] == '\n') {
-			clients[fd].msg[j] = '\0';
-
-			sprintf(write_buffer, "client %d: %s\n", clients[fd].id, clients[fd].msg);
-			broadcaster(fd);
-			bzero(clients[fd].msg, sizeof(clients[fd].msg));
-			j = -1;
-		}
+	{
+		if (FD_ISSET(fd, &wfds) && fd != author)
+			send(fd, str, strlen(str), 0);
 	}
 }
 
-int		main(int ac, char** av) {
-	if (ac != 2) {
+void	register_client(int fd)
+{
+	max_fd = fd > max_fd ? fd : max_fd;
+	ids[fd] = count++;
+	msgs[fd] = NULL;
+	FD_SET(fd, &afds);
+	sprintf(buf_write, "server: client %d just arrived\n", ids[fd]);
+	notify_other(fd, buf_write);
+}
+
+void	remove_client(int fd)
+{
+	sprintf(buf_write, "server: client %d just left\n", ids[fd]);
+	notify_other(fd, buf_write);
+	free(msgs[fd]);
+	FD_CLR(fd, &afds);
+	close(fd);
+}
+
+void	send_msg(int fd)
+{
+	char *msg;
+
+	while (extract_message(&(msgs[fd]), &msg))
+	{
+		sprintf(buf_write, "client %d: ", ids[fd]);
+		notify_other(fd, buf_write);
+		notify_other(fd, msg);
+		free(msg);
+	}
+}
+
+int		create_socket()
+{
+	max_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (max_fd < 0)
+		fatal_error();
+	FD_SET(max_fd, &afds);
+	return max_fd;
+}
+
+int		main(int ac, char **av)
+{
+	if (ac != 2)
+	{
 		write(2, "Wrong number of arguments\n", 26);
 		exit(1);
 	}
 
-	FD_ZERO(&fds);
-	bzero(clients, sizeof(clients));
+	FD_ZERO(&afds);
+	int sockfd = create_socket();
 
-	int sockfd = init_server(av[1]);
+	// START COPY-PASTE FROM MAIN
 
-	max_fd = sockfd;
-	FD_SET(sockfd, &fds);
+	struct sockaddr_in servaddr;
+	bzero(&servaddr, sizeof(servaddr));
 
-	while (1) {
-		read_fds = write_fds = fds;
-		if (select(max_fd + 1, &read_fds, &write_fds, NULL, NULL) < 0)
-			continue;
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(2130706433);
+	servaddr.sin_port = htons(atoi(av[1])); // replace 8080
 
-		for (int fd = 0; fd <= max_fd; fd++) {
-			if (!FD_ISSET(fd, &read_fds))
+	if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)))
+		fatal_error();
+	if (listen(sockfd, SOMAXCONN)) // the main uses 10, SOMAXCONN is 180 on my machine
+		fatal_error();
+
+	// END COPY-PASTE
+
+	while (1)
+	{
+		rfds = wfds = afds;
+
+		if (select(max_fd + 1, &rfds, &wfds, NULL, NULL) < 0)
+			fatal_error();
+
+		for (int fd = 0; fd <= max_fd; fd++)
+		{
+			if (!FD_ISSET(fd, &rfds))
 				continue;
-			if (sockfd == fd)
-				handle_new_connection(fd);
+
+			if (fd == sockfd)
+			{
+				socklen_t addr_len = sizeof(servaddr);
+				int client_fd = accept(sockfd, (struct sockaddr *)&servaddr, &addr_len);
+				if (client_fd >= 0)
+				{
+					register_client(client_fd);
+					break ;
+				}
+			}
 			else
-				handle_message(fd);
+			{
+				int read_bytes = recv(fd, buf_read, 1000, 0);
+				if (read_bytes <= 0)
+				{
+					remove_client(fd);
+					break ;
+				}
+				buf_read[read_bytes] = '\0';
+				msgs[fd] = str_join(msgs[fd], buf_read);
+				send_msg(fd);
+			}
 		}
 	}
-
 	return 0;
 }
