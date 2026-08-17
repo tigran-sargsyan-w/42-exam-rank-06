@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netinet/ip.h>
+#include <sys/select.h>
 
 int		count = 0, max_fd = 0;
 int		ids[65536];
