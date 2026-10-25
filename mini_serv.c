@@ -162,6 +162,7 @@ int		main(int ac, char **av)
 
 			if (fd == sockfd)
 			{
+				// New client connection
 				socklen_t addr_len = sizeof(servaddr);
 				int client_fd = accept(sockfd, (struct sockaddr *)&servaddr, &addr_len);
 				if (client_fd >= 0)
@@ -172,6 +173,7 @@ int		main(int ac, char **av)
 			}
 			else
 			{
+				//	 Existing client sent data
 				int read_bytes = recv(fd, buf_read, 1000, 0);
 				if (read_bytes <= 0)
 				{
