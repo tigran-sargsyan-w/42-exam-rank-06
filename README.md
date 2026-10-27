@@ -258,7 +258,9 @@ man 2 recv
 man 2 send
 ```
 
-> 💡 **Tip:** `man 2 select_tut` is particularly useful because it includes a complete example of a TCP server using `select()`. Always check the allowed functions in the subject before using code from the manuals.
+💡 **Tip:**: Inside a manual page, type `/EXAMPLES` and press Enter to jump directly to the code examples. Press n to find the next match and q to quit.
+
+Some manuals contain complete server implementations or reference other useful manuals in the SEE ALSO section.For example, `man 2 select_tut` is particularly useful because it includes a complete example of a TCP server using `select()`. Always check the allowed functions before adapting their code.
 
 **How I practice with this map:** first recite **`6–6–2–6–1`**, then write the function names in order, sketch the setup and event loop, and finally implement each block without looking at the solution. For the two helpers, review the **starter code supplied with the exercise**; do not assume it is unchanged in every exam version.
 
