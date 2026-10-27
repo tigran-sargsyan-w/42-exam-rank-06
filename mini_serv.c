@@ -7,13 +7,12 @@
 #include <sys/select.h>
 
 // 2. GLOBAL VARIABLES (6 GROUPS)
-int		count = 0, max_fd = 0;
+int		count = 0;
+int		max_fd = 0;
 int		ids[65536];
 char	*msgs[65536];
-
 fd_set	rfds, wfds, afds;
 char	buf_read[1001], buf_write[42];
-
 
 // 3. PROVIDED HELPERS MAIN.C (2)
 // START COPY-PASTE FROM GIVEN MAIN
