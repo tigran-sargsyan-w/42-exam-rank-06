@@ -126,6 +126,7 @@ int		create_socket()
 // 5. MAIN (1)
 int		main(int ac, char **av)
 {
+	// SETUP (6 steps): argc -> zero -> socket -> address -> bind -> listen
 	if (ac != 2)
 	{
 		write(2, "Wrong number of arguments\n", 26);
@@ -151,6 +152,7 @@ int		main(int ac, char **av)
 
 	// END COPY-PASTE
 
+	// LOOP (6 steps): while -> copy -> select -> for -> accept / recv
 	while (1)
 	{
 		rfds = wfds = afds;
