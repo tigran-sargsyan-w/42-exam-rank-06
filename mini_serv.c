@@ -1,3 +1,4 @@
+// 1. INCLUDES (6)
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include <netinet/ip.h>
 #include <sys/select.h>
 
+// 2. GLOBAL VARIABLES (6 GROUPS)
 int		count = 0, max_fd = 0;
 int		ids[65536];
 char	*msgs[65536];
@@ -13,6 +15,7 @@ fd_set	rfds, wfds, afds;
 char	buf_read[1001], buf_write[42];
 
 
+// 3. PROVIDED HELPERS MAIN.C (2)
 // START COPY-PASTE FROM GIVEN MAIN
 
 int extract_message(char **buf, char **msg)
@@ -64,7 +67,7 @@ char *str_join(char *buf, char *add)
 
 // END COPY-PASTE
 
-
+// 4. SERVER FUNCTIONS (6)
 void	fatal_error()
 {
 	write(2, "Fatal error\n", 12);
@@ -121,6 +124,7 @@ int		create_socket()
 	return max_fd;
 }
 
+// 5. MAIN (1)
 int		main(int ac, char **av)
 {
 	if (ac != 2)
