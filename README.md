@@ -243,6 +243,23 @@ while (1)
                                                       → broadcast to others
 ```
 
+### 📚 Useful Man Pages
+
+I also recommend checking the manual pages during exam preparation and, if permitted, during the exam itself. They contain useful function descriptions, syntax, and code examples, especially for socket programming and `select()`.
+
+```bash
+man 2 select
+man 2 select_tut
+man 2 socket
+man 2 accept
+man 2 bind
+man 3 getaddrinfo
+man 2 recv
+man 2 send
+```
+
+> 💡 **Tip:** `man 2 select_tut` is particularly useful because it includes a complete example of a TCP server using `select()`. Always check the allowed functions in the subject before using code from the manuals.
+
 **How I practice with this map:** first recite **`6–6–2–6–1`**, then write the function names in order, sketch the setup and event loop, and finally implement each block without looking at the solution. For the two helpers, review the **starter code supplied with the exercise**; do not assume it is unchanged in every exam version.
 
 ---
