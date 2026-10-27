@@ -209,8 +209,8 @@ MINI_SERV: 6 - 6 - 2 - 6 - 1
 │   └── create_socket
 │
 └── 1 MAIN
-    ├── SETUP: argc → zero → socket → address → bind → listen
-    └── LOOP:  while → reset → select → for → accept / recv
+    ├── SETUP (6 steps): argc → zero → socket → address → bind → listen
+    └── LOOP (6 steps):  while → reset → select → for → accept / recv
 ```
 
 ### The `main()` flow at a glance
