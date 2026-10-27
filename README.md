@@ -243,6 +243,62 @@ while (1)
                                                       → broadcast to others
 ```
 
+### 📚 Manual Pages — Where to Find Code Examples
+
+The **`6 → 6 → 2 → 6 → 1`** map helps me remember the order. These references help me recover function signatures, socket structures, and the `select()` pattern when practicing from scratch.
+
+| Mental-map block | What to open | What to look for |
+| --- | --- | --- |
+| **6 includes** | `man 2 socket`, `man 2 select`, `man 7 ip` | Relevant headers, socket types, `fd_set`, and `sockaddr_in` |
+| **6 variable groups** | `man 2 select` | `fd_set`, `FD_ZERO`, `FD_SET`, `FD_CLR`, `FD_ISSET`; client arrays and buffers are part of this solution's design |
+| **2 starter helpers** | The supplied `main.c` | `extract_message()` and `str_join()`; inspect the provided code rather than looking for them in system manuals |
+| **6 server functions** | `man 2 write`, `man 2 send`, `man 2 close`, `man 2 socket`, `man 3 malloc` | Error output, broadcasting primitives, cleanup, socket creation, and allocation; the server helpers themselves are custom logic |
+| **1 main — setup** | `man 2 socket`, `man 7 ip`, `man 3 byteorder`, `man 2 bind`, `man 2 listen` | `socket → sockaddr_in → htons/htonl → bind → listen` |
+| **1 main — loop** | `man 2 select`, `man 2 select_tut`, `man 2 accept`, `man 2 recv`, `man 2 send` | Reset the descriptor sets, wait for readiness, accept connections, and receive/send data |
+
+**Best pages for worked examples:**
+
+- [`select(2)`](https://man7.org/linux/man-pages/man2/select.2.html) — a small `fd_set` example and the meanings of the `FD_*` operations.
+- [`select_tut(2)`](https://man7.org/linux/man-pages/man2/select_tut.2.html) — the **EXAMPLES** section contains a more complete TCP forwarding program using socket setup, `select()`, and `accept()`.
+- [`ip(7)`](https://man7.org/linux/man-pages/man7/ip.7.html) — IPv4 address structures, loopback (`127.0.0.1`), and network byte order.
+- [`byteorder(3)`](https://man7.org/linux/man-pages/man3/byteorder.3.html) — why the port uses `htons()` and the address can use `htonl()`.
+
+**Example: the IPv4 address setup** (one piece of the `main()` setup):
+
+```c
+struct sockaddr_in addr;
+bzero(&addr, sizeof(addr));
+addr.sin_family = AF_INET;
+addr.sin_addr.s_addr = htonl(2130706433); // 127.0.0.1
+addr.sin_port = htons(atoi(av[1]));
+```
+
+**Example: the central `select()` pattern** (one piece of the event loop):
+
+```c
+rfds = wfds = afds;  // copy the master set before every select()
+if (select(max_fd + 1, &rfds, &wfds, NULL, NULL) < 0)
+    fatal_error();
+
+if (FD_ISSET(sockfd, &rfds))
+{
+    // listening socket is readable: accept a new connection
+}
+```
+
+**Find examples quickly in a terminal:**
+
+```bash
+man 2 select         # fd_set and FD_* macros
+man 2 select_tut     # fuller TCP/select() example
+man 7 ip             # sockaddr_in and IPv4 loopback
+man 3 byteorder      # htons() / htonl()
+```
+
+Inside a manual page, type `/EXAMPLES` and press Enter to search for examples (`n` for the next match, `q` to quit). Some pages describe the function but have no full program; `select_tut(2)` is the most useful full example here.
+
+> ⚠️ **Exam constraint:** man-page examples are **not** exam-ready solutions. They may use forbidden functions, directives such as `#define`, or different socket setup. Adapt only the permitted parts and always follow the subject and your campus's exam rules.
+
 **How I practice with this map:** first recite **`6–6–2–6–1`**, then write the function names in order, sketch the setup and event loop, and finally implement each block without looking at the solution. For the two helpers, review the **starter code supplied with the exercise**; do not assume it is unchanged in every exam version.
 
 ---
