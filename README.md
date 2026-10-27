@@ -169,6 +169,84 @@ There is no custom automated test suite included in this repository. I use `nc` 
 
 ---
 
+## 🗺️ Mental Map — `6 → 6 → 2 → 6 → 1`
+
+To rebuild `mini_serv` from memory, I use a simple numerical mnemonic:
+
+> **MINI_SERV: 6 INCLUDES → 6 VARIABLE GROUPS → 2 STARTER HELPERS → 6 FUNCTIONS → 1 MAIN**
+
+This is a **memorization aid for my practice implementation**, not a required structure from the official subject. The goal is to remember the order of the building blocks, then understand and write the logic behind each one. Explicitly including `<sys/select.h>` helps declare `fd_set` and `select()` without relying on another header to include it indirectly.
+
+```text
+MINI_SERV: 6 - 6 - 2 - 6 - 1
+│
+├── 6 INCLUDES
+│   ├── <unistd.h>
+│   ├── <string.h>
+│   ├── <stdlib.h>
+│   ├── <stdio.h>
+│   ├── <netinet/ip.h>
+│   └── <sys/select.h>
+│
+├── 6 VARIABLE GROUPS
+│   ├── count
+│   ├── max_fd
+│   ├── ids
+│   ├── msgs
+│   ├── fd_sets: rfds / wfds / afds
+│   └── buffers: buf_read / buf_write
+│
+├── 2 STARTER HELPERS
+│   ├── extract_message
+│   └── str_join
+│
+├── 6 FUNCTIONS (in writing order)
+│   ├── fatal_error
+│   ├── notify_other
+│   ├── register_client
+│   ├── remove_client
+│   ├── send_msg
+│   └── create_socket
+│
+└── 1 MAIN
+    ├── SETUP: argc → zero → socket → address → bind → listen
+    └── LOOP:  while → reset → select → for → accept / recv
+```
+
+### The `main()` flow at a glance
+
+```text
+START
+  |
+  v
+check argc → initialize state → socket → 127.0.0.1 → bind → listen
+  |
+  v
+while (1)
+  |
+  +-- reset read/write fd sets from the active set
+  |
+  +-- select() → iterate over ready fds
+                    |
+                    +-- listening socket → accept()
+                    |                      → assign next client ID
+                    |                      → broadcast "just arrived"
+                    |
+                    +-- client socket → recv()
+                                           |
+                                           +-- <= 0 → disconnect
+                                           |          → broadcast "just left"
+                                           |
+                                           +-- > 0  → accumulate input
+                                                      → extract complete lines
+                                                      → add "client ID: " prefix
+                                                      → broadcast to others
+```
+
+**How I practice with this map:** first recite **`6–6–2–6–1`**, then write the function names in order, sketch the setup and event loop, and finally implement each block without looking at the solution. For the two helpers, review the **starter code supplied with the exercise**; do not assume it is unchanged in every exam version.
+
+---
+
 ## 📖 How I Use This Repo
 
 - Read the subject carefully before writing code.
