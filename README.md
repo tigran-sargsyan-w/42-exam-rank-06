@@ -245,7 +245,7 @@ while (1)
 
 ### 📚 Useful Man Pages
 
-I also recommend checking the manual pages during exam preparation and, if permitted, during the exam itself. They contain useful function descriptions, syntax, and code examples, especially for socket programming and `select()`.
+I also recommend using manual pages during preparation and, if permitted, during the exam. They contain useful function descriptions, syntax, and code examples for socket programming.
 
 ```bash
 man 2 select
