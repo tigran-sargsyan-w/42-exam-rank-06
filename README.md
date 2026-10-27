@@ -247,7 +247,7 @@ while (1)
 
 I also recommend using manual pages during preparation and, if permitted, during the exam. They contain useful function descriptions, syntax, and code examples for socket programming.
 
-```bash
+```txt
 man 2 select
 man 2 select_tut
 man 2 socket
